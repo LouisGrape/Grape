@@ -40,15 +40,29 @@
 
         .counter-container {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             font-size: 24px;
             font-weight: bold;
+        }
+
+        .sub-counter {
+            font-size: 14px;
+            color: #d1bcff;
+            font-weight: normal;
+            margin-left: 40px;
         }
 
         .grape-icon {
             font-size: 30px;
             margin-right: 10px;
             animation: pulse 2s infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        #right-actions {
+            display: flex;
+            gap: 10px;
         }
 
         #reset-btn {
@@ -66,13 +80,49 @@
             background: #ff6b81;
         }
 
+        /* Upgrade Shop Bar */
+        #shop-container {
+            position: fixed;
+            top: 75px;
+            z-index: 90;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #upgrade-btn {
+            background: #ffa500;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        #upgrade-btn:hover:not(:disabled) {
+            background: #ffb833;
+            transform: scale(1.05);
+        }
+
+        #upgrade-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
         /* Game Environment */
         #game-container {
             position: relative;
             width: 100%;
             max-width: 600px;
             height: 100%;
-            margin-top: 60px;
+            margin-top: 120px;
             display: flex;
             justify-content: center;
             align-items: flex-end;
@@ -144,7 +194,7 @@
             position: absolute;
             color: #fff;
             font-weight: bold;
-            font-size: 20px;
+            font-size: 22px;
             text-shadow: 2px 2px 0px #4b0082;
             pointer-events: none;
             z-index: 5;
@@ -170,7 +220,7 @@
                 opacity: 1;
             }
             100% {
-                transform: translateY(400px) rotate(360deg);
+                transform: translateY(420px) translateX(var(--drift, 0px)) rotate(360deg);
                 opacity: 0;
             }
         }
@@ -181,7 +231,7 @@
                 opacity: 1;
             }
             100% {
-                transform: translateY(-60px);
+                transform: translateY(-70px);
                 opacity: 0;
             }
         }
@@ -198,10 +248,18 @@
     <!-- Top Bar Counter -->
     <div id="top-bar">
         <div class="counter-container">
-            <span class="grape-icon">🍇</span>
-            Grapes: <span id="grape-count" style="margin-left: 10px;">0</span>
+            <div><span class="grape-icon">🍇</span>Grapes: <span id="grape-count">0</span></div>
+            <div class="sub-counter">(+<span id="gpc-count">1</span> per click)</div>
         </div>
-        <button id="reset-btn">Reset</button>
+        <div id="right-actions">
+            <button id="reset-btn">Reset</button>
+        </div>
+    </div>
+
+    <!-- Upgrade Shop Bar -->
+    <div id="shop-container">
+        <div>🍊 <strong>Golden Fertilizer</strong></div>
+        <button id="upgrade-btn">Buy for <span id="upgrade-cost">15</span> 🍇</button>
     </div>
 
     <!-- Main Game Area -->
@@ -222,81 +280,54 @@
     <div id="ground"></div>
 
     <script>
-        // Track the total number of grapes collected
+        // Core Game Variables (Loaded from local storage or defaults)
         let totalGrapes = localStorage.getItem('grapeCount') ? parseInt(localStorage.getItem('grapeCount')) : 0;
+        let grapesPerClick = localStorage.getItem('grapesPerClick') ? parseInt(localStorage.getItem('grapesPerClick')) : 1;
+        let upgradeCost = localStorage.getItem('upgradeCost') ? parseInt(localStorage.getItem('upgradeCost')) : 15;
        
+        // DOM Elements
         const countDisplay = document.getElementById('grape-count');
+        const gpcDisplay = document.getElementById('gpc-count');
+        const upgradeCostDisplay = document.getElementById('upgrade-cost');
+        const upgradeBtn = document.getElementById('upgrade-btn');
         const clickableGrapes = document.querySelectorAll('.clickable-grape');
         const gameContainer = document.getElementById('game-container');
         const resetBtn = document.getElementById('reset-btn');
 
-        // Update the top bar with the initial saved score
-        countDisplay.textContent = totalGrapes;
+        // Initial UI Synchronization
+        updateUI();
 
-        // Loop through all grape bunches and add click events
+        function updateUI() {
+            countDisplay.textContent = totalGrapes;
+            gpcDisplay.textContent = grapesPerClick;
+            upgradeCostDisplay.textContent = upgradeCost;
+            
+            // Disable purchase button if the player lacks funds
+            if (totalGrapes < upgradeCost) {
+                upgradeBtn.disabled = true;
+            } else {
+                upgradeBtn.disabled = false;
+            }
+        }
+
+        // Click Harvesting Behavior
         clickableGrapes.forEach(grapeBunch => {
             grapeBunch.addEventListener('click', (e) => {
-                // Increase the score
-                totalGrapes++;
-                countDisplay.textContent = totalGrapes;
+                totalGrapes += grapesPerClick;
                 localStorage.setItem('grapeCount', totalGrapes);
+                updateUI();
 
-                // Get coordinates of the clicked bunch to spawn effects
+                // Geometry mapping for popups
                 const rect = e.target.getBoundingClientRect();
                 const containerRect = gameContainer.getBoundingClientRect();
                
-                // Calculate position relative to the game container
                 const x = rect.left - containerRect.left + (rect.width / 2);
                 const y = rect.top - containerRect.top + (rect.height / 2);
 
-                // Trigger animations
                 createFallingGrape(x, y);
-                createFloatingText(x, y);
+                createFloatingText(x, y, `+${grapesPerClick}`);
             });
         });
 
-        // Creates a loose single grape that falls down when harvested
+        // Drop Effect Generator
         function createFallingGrape(x, y) {
-            const singleGrape = document.createElement('div');
-            singleGrape.className = 'falling-grape';
-            singleGrape.textContent = '🍇';
-            singleGrape.style.left = `${x - 12}px`; // Center the emoji
-            singleGrape.style.top = `${y - 12}px`;
-           
-            // Random horizontal drift
-            const randomXDrift = (Math.random() - 0.5) * 60;
-            singleGrape.style.setProperty('--drift', `${randomXDrift}px`);
-           
-            gameContainer.appendChild(singleGrape);
-
-            // Clean up element after animation finishes
-            setTimeout(() => {
-                singleGrape.remove();
-            }, 1000);
-        }
-
-        // Creates a "+1" visual pop-up text effect
-        function createFloatingText(x, y) {
-            const text = document.createElement('div');
-            text.className = 'floating-text';
-            text.textContent = '+1';
-            text.style.left = `${x - 10}px`;
-            text.style.top = `${y - 20}px`;
-
-            gameContainer.appendChild(text);
-
-            setTimeout(() => {
-                text.remove();
-            }, 800);
-        }
-
-        // Reset system
-        resetBtn.addEventListener('click', () => {
-            totalGrapes = 0;
-            countDisplay.textContent = totalGrapes;
-            localStorage.setItem('grapeCount', totalGrapes);
-        });
-    </script>
-</body>
-</html>
-
