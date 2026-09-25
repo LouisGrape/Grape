@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grape Empire Tycoon</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            transition: background 1s ease;
+        }
+
+        /* Sunset/Golden theme for high levels */
+        body.tier-2 { background: linear-gradient(to bottom, #FF7E5F, #FEB47B); }
+        body.tier-3 { background: linear-gradient(to bottom, #2C3E50, #FD746C); }
+
+        /* Left Side: Game Canvas */
+        #game-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 60px;
+            height: 100%;
+        }
+
+        /* Right Side: Corporate Shop Panel */
+        #shop-panel {
+            width: 380px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid #4b0082;
+        }
+
+        /* Top Counter Header Bar */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(75, 0, 130, 0.9);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-score {
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .sub-rates {
+            font-size: 13px;
+            color: #e8dbff;
+            margin-top: 2px;
+        }
+
+        #tier-badge {
+            background: #ffa500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Shop Elements */
+        .shop-header {
+            background: #4b0082;
+            color: white;
+            padding: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .shop-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .shop-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .shop-item:hover {
+            border-color: #4b0082;
+            transform: translateY(-2px);
+        }
+
+        .item-info h4 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .item-info p {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .buy-btn {
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .buy-btn:hover:not(:disabled) { background: #26af5f; }
+        .buy-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #reset-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+            align-self: center;
+            margin-bottom: 15px;
+        }
+
+        /* The Grape Tree Setup */
+        #tree-container {
+            position: relative;
+            width: 320px;
+            height: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #trunk {
+            width: 36px;
+            height: 200px;
+            background: #8B4513;
+            border-radius: 6px;
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        #foliage {
+            width: 300px;
+            height: 300px;
+            background: #2ed573;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            box-shadow: inset -25px -25px 0 rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
+            z-index: 2;
+            transition: background 0.5s;
+        }
+
+        /* Regrowth Bunch Mechanics */
+        .clickable-grape {
+            position: absolute;
+            font-size: 48px;
+            z-index: 3;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.3s ease;
+        }
+
+        .clickable-grape.harvested {
+            opacity: 0.1;
+            pointer-events: none;
+            transform: scale(0.5);
+        }
+
+        .clickable-grape:active { transform: scale(0.8); }
+
+        #bunch1 { top: 70px; left: 60px; }
+        #bunch2 { top: 50px; left: 135px; }
+        #bunch3 { top: 80px; right: 50px; }
+        #bunch4 { top: 160px; left: 80px; }
+        #bunch5 { top: 150px; right: 70px; }
+
+        /* Particle FX & Floating text structures */
+        .juice-drop {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #9b59b6;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 4;
+            animation: explode 0.6s forwards ease-out;
+        }
+
+        .floating-text {
+            position: absolute;
+            color: #fff;
+            font-weight: bold;
+            font-size: 24px;
+            text-shadow: 2px 2px 0px #4b0082;
+            pointer-events: none;
+            z-index: 5;
+            animation: floatUp 0.8s forwards;
+        }
+
+        #ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: #7bed9f;
+            z-index: 0;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--mx), var(--my)) scale(0); opacity: 0; }
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-80px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Game Window -->
+    <div id="game-area">
+        <div id="top-bar">
+            <div class="stats-container">
+                <div class="main-score">🍇 <span id="grape-count">0</span></div>
+                <div class="sub-rates">GPC: +<span id="gpc-display">1</span> | GPS: +<span id="gps-display">0</span></div>
+            </div>
+            <div id="tier-badge">Tier 1: Backyard Vine</div>
+        </div>
+
+        <div id="tree-container">
+            <div id="trunk"></div>
+            <div id="foliage"></div>
+            <div class="clickable-grape" id="bunch1">🍇</div>
+            <div class="clickable-grape" id="bunch2">🍇</div>
+            <div class="clickable-grape" id="bunch3">🍇</div>
+            <div class="clickable-grape" id="bunch4">🍇</div>
+            <div class="clickable-grape" id="bunch5">🍇</div>
+        </div>
+        <div id="ground"></div>
+    </div>
+
+    <!-- Right Side Dashboard Upgrade Shop -->
+    <div id="shop-panel">
+        <div class="shop-header">Vineyard Shop</div>
+        <div class="shop-list">
+            
+            <!-- Upgrade Item 1 -->
+            <div class="shop-item">
+                <div class="item-info">
+                    <h4>Golden Fertilizer</h4>
+                    <p>Doubles Grapes per Click</p>
+                </div>
+                <button class="buy-btn" id="up-gpc">Cost: 15</button>
+            </div>
+
+            <!-- Upgrade Item 2 -->
+            <div class="shop-item">
+                <div class="item-info">
+                    <h4>Auto Harvester</h4>
+                    <p>Collects +1 grape every second</p>
+                </div>
+                <button class="buy-btn" id="up-gps1">Cost: 50</button>
+            </div>
+
+            <!-- Upgrade Item 3 -->
+            <div class="shop-item">
+                <div class="item-info">
+                    <h4>Vineyard Tractor</h4>
+                    <p>Collects +10 grapes every second</p>
+                </div>
+                <button class="buy-btn" id="up-gps2">Cost: 400</button>
+            </div>
+
+        </div>
+        <button id="reset-btn">Reset Database</button>
+    </div>
+
+    <script>
+        // Core State Objects
+        let state = {
+            grapes: 0,
+            gpc: 1,
+            gps: 0,
+            costGpc: 15,
+            costGps1: 50,
+            costGps2: 400,
+            lifetimeGrapes: 0
+        };
+
+        // Load Saves
+        if (localStorage.getItem('grapeState')) {
+            state = JSON.parse(localStorage.getItem('grapeState'));
+        }
+
+        const grapeCountEl = document.getElementById('grape-count');
+        const gpcDisplayEl = document.getElementById('gpc-display');
