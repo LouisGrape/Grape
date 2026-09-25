@@ -35,6 +35,7 @@
             justify-content: flex-end;
             padding-bottom: 60px;
             height: 100%;
+            z-index: 1;
         }
 
         /* Right Side: Corporate Shop Panel */
@@ -62,7 +63,7 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 5;
+            z-index: 20;
         }
 
         .stats-container {
@@ -175,15 +176,16 @@
         #tree-container {
             position: relative;
             width: 320px;
-            height: 480px;
+            height: 440px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            z-index: 5;
         }
 
         #trunk {
             width: 36px;
-            height: 200px;
+            height: 180px;
             background: #8B4513;
             border-radius: 6px;
             position: absolute;
@@ -207,24 +209,24 @@
         .clickable-grape {
             position: absolute;
             font-size: 48px;
-            z-index: 3;
+            z-index: 6;
             cursor: pointer;
             transition: transform 0.1s, opacity 0.3s ease;
         }
 
         .clickable-grape.harvested {
-            opacity: 0.1;
+            opacity: 0.15;
             pointer-events: none;
             transform: scale(0.5);
         }
 
         .clickable-grape:active { transform: scale(0.8); }
 
-        #bunch1 { top: 70px; left: 60px; }
-        #bunch2 { top: 50px; left: 135px; }
-        #bunch3 { top: 80px; right: 50px; }
-        #bunch4 { top: 160px; left: 80px; }
-        #bunch5 { top: 150px; right: 70px; }
+        #bunch1 { top: 70px; left: 40px; }
+        #bunch2 { top: 40px; left: 135px; }
+        #bunch3 { top: 80px; right: 40px; }
+        #bunch4 { top: 160px; left: 70px; }
+        #bunch5 { top: 150px; right: 60px; }
 
         /* Particle FX & Floating text structures */
         .juice-drop {
@@ -234,7 +236,7 @@
             background: #9b59b6;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 4;
+            z-index: 8;
             animation: explode 0.6s forwards ease-out;
         }
 
@@ -245,7 +247,7 @@
             font-size: 24px;
             text-shadow: 2px 2px 0px #4b0082;
             pointer-events: none;
-            z-index: 5;
+            z-index: 9;
             animation: floatUp 0.8s forwards;
         }
 
@@ -257,6 +259,7 @@
             height: 60px;
             background: #7bed9f;
             z-index: 0;
+            pointer-events: none; /* Stops it from blocking clicks */
         }
 
         @keyframes explode {
@@ -299,7 +302,6 @@
         <div class="shop-header">Vineyard Shop</div>
         <div class="shop-list">
             
-            <!-- Upgrade Item 1 -->
             <div class="shop-item">
                 <div class="item-info">
                     <h4>Golden Fertilizer</h4>
@@ -308,7 +310,6 @@
                 <button class="buy-btn" id="up-gpc">Cost: 15</button>
             </div>
 
-            <!-- Upgrade Item 2 -->
             <div class="shop-item">
                 <div class="item-info">
                     <h4>Auto Harvester</h4>
@@ -317,7 +318,6 @@
                 <button class="buy-btn" id="up-gps1">Cost: 50</button>
             </div>
 
-            <!-- Upgrade Item 3 -->
             <div class="shop-item">
                 <div class="item-info">
                     <h4>Vineyard Tractor</h4>
@@ -342,10 +342,12 @@
             lifetimeGrapes: 0
         };
 
-        // Load Saves
-        if (localStorage.getItem('grapeState')) {
-            state = JSON.parse(localStorage.getItem('grapeState'));
+        // Load Saves safely
+        try {
+            if (localStorage.getItem('grapeState')) {
+                state = JSON.parse(localStorage.getItem('grapeState'));
+            }
+        } catch (e) {
+            console.error("Could not load save state", e);
         }
 
-        const grapeCountEl = document.getElementById('grape-count');
-        const gpcDisplayEl = document.getElementById('gpc-display');
