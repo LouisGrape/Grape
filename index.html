@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grape Clicker</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f7f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        /* Top Bar Counter */
+        #top-bar {
+            width: 100%;
+            background-color: #4a2c6d;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        /* Game Container */
+        #game-container {
+            margin-top: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* The Grape Vine (Clickable Area) */
+        #grape-vine {
+            font-size: 120px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            position: relative;
+        }
+
+        #grape-vine:active {
+            transform: scale(0.95);
+        }
+
+        /* Floating Grape Animation */
+        .floating-grape {
+            position: absolute;
+            font-size: 30px;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.4);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Counter Bar -->
+    <div id="top-bar">
+        🍇 Grapes Harvested: <span id="grape-count">0</span>
+    </div>
+
+    <!-- Game Elements -->
+    <div id="game-container">
+        <!-- Clicking this acts as harvesting the vine -->
+        <div id="grape-vine">🌿🍇</div>
+        <p style="color: #666; font-weight: bold; margin-top: 20px;">Click the vine to harvest grapes!</p>
+    </div>
+
+    <script>
+        // Track the total number of grapes
+        let grapeCount = 0;
+
+        // Get DOM elements
+        const vine = document.getElementById('grape-vine');
+        const countDisplay = document.getElementById('grape-count');
+        const container = document.getElementById('game-container');
+
+        // Add click event listener to the vine
+        vine.addEventListener('click', (event) => {
+            // 1. Increment the score
+            grapeCount++;
+            countDisplay.textContent = grapeCount;
+
+            // 2. Create a floating grape effect
+            createFloatingGrape(event.clientX, event.clientY);
+        });
+
+        // Function to make a little grape pop up where you clicked
+        function createFloatingGrape(x, y) {
+            const grape = document.createElement('div');
+            grape.className = 'floating-grape';
+            grape.textContent = '🍇';
+
+            // Get container position to align absolute coordinates properly
+            const rect = container.getBoundingClientRect();
+            
+            // Position the emoji right under the mouse pointer
+            grape.style.left = (x - rect.left - 15) + 'px';
+            grape.style.top = (y - rect.top - 15) + 'px';
+
+            container.appendChild(grape);
+
+            // Remove the element after the animation finishes
+            setTimeout(() => {
+                grape.remove();
+            }, 800);
+        }
+    </script>
+</body>
+</html>
