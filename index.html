@@ -5,205 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grape Empire Tycoon</title>
     <style>
-        * {// Core State Objects
-let state = {
-    grapes: 0,
-    gpc: 1,
-    gps: 0,
-    costGpc: 15,
-    costGps1: 50,
-    costGps2: 400,
-    lifetimeGrapes: 0
-};
-
-// Load Saves safely
-try {
-    if (localStorage.getItem('grapeState')) {
-        state = JSON.parse(localStorage.getItem('grapeState'));
-    }
-} catch (e) {
-    console.error("Could not load save state, resetting defaults", e);
-}
-
-const grapeCountEl = document.getElementById('grape-count');
-const gpcDisplayEl = document.getElementById('gpc-display');
-const gpsDisplayEl = document.getElementById('gps-display');
-const badgeEl = document.getElementById('tier-badge');
-const foliageEl = document.getElementById('foliage');
-
-// Shop Buttons Map (Double-checked IDs matching the HTML exactly)
-const buttons = {
-    gpc: document.getElementById('up-gpc'),
-    gps1: document.getElementById('up-gps1'),
-    gps2: document.getElementById('up-gps2')
-};
-
-function updateUI() {
-    if (!grapeCountEl || !gpcDisplayEl || !gpsDisplayEl) return; // Prevent crashes
-
-    grapeCountEl.textContent = Math.floor(state.grapes);
-    gpcDisplayEl.textContent = state.gpc;
-    gpsDisplayEl.textContent = state.gps;
-
-    // Render Price Updates safely
-    if (buttons.gpc) {
-        buttons.gpc.textContent = `Cost: ${state.costGpc}`;
-        buttons.gpc.disabled = state.grapes < state.costGpc;
-    }
-    if (buttons.gps1) {
-        buttons.gps1.textContent = `Cost: ${state.costGps1}`;
-        buttons.gps1.disabled = state.grapes < state.costGps1;
-    }
-    if (buttons.gps2) {
-        buttons.gps2.textContent = `Cost: ${state.costGps2}`;
-        buttons.gps2.disabled = state.grapes < state.costGps2;
-    }
-
-    // Milestone System Evaluation
-    if (foliageEl && badgeEl) {
-        if (state.lifetimeGrapes >= 5000) {
-            document.body.className = "tier-3";
-            foliageEl.style.background = "#8e44ad"; // Purple Tree
-            badgeEl.textContent = "Tier 3: Royal Winery";
-        } else if (state.lifetimeGrapes >= 500) {
-            document.body.className = "tier-2";
-            foliageEl.style.background = "#f1c40f"; // Golden Tree
-            badgeEl.textContent = "Tier 2: Golden Orchard";
-        } else {
-            document.body.className = "";
-            foliageEl.style.background = "#2ed573";
-            badgeEl.textContent = "Tier 1: Backyard Vine";
-        }
-    }
-}
-
-function saveGame() {
-    localStorage.setItem('grapeState', JSON.stringify(state));
-}
-
-// Active Click Mechanics
-document.querySelectorAll('.clickable-grape').forEach(bunch => {
-    bunch.addEventListener('click', (e) => {
-        if (bunch.classList.contains('harvested')) return;
-
-        state.grapes += state.gpc;
-        state.lifetimeGrapes += state.gpc;
-        
-        // Trigger Harvest Timer
-        bunch.classList.add('harvested');
-        setTimeout(() => { bunch.classList.remove('harvested'); }, 3500); // 3.5s regrowth loop
-
-        // Setup coordinates
-        const rect = e.target.getBoundingClientRect();
-        const containerRect = document.getElementById('game-area').getBoundingClientRect();
-        const x = rect.left - containerRect.left + (rect.width / 2);
-        const y = rect.top - containerRect.top + (rect.height / 2);
-
-        createJuiceSplat(x, y);
-        createFloatingText(x, y, `+${state.gpc}`);
-        updateUI();
-        saveGame();
-    });
-});
-
-// Juice Burst Engine
-function createJuiceSplat(x, y) {
-    const gameArea = document.getElementById('game-area');
-    if (!gameArea) return;
-
-    for (let i = 0; i < 8; i++) {
-        const drop = document.createElement('div');
-        drop.className = 'juice-drop';
-        drop.style.left = `${x}px`;
-        drop.style.top = `${y}px`;
-
-        // Set random explosion trajectories using CSS variables
-        const mx = (Math.random() - 0.5) * 160 + 'px';
-        const my = (Math.random() - 0.5) * 160 - 40 + 'px'; 
-        drop.style.setProperty('--mx', mx);
-        drop.style.setProperty('--my', my);
-
-        gameArea.appendChild(drop);
-        drop.addEventListener('animationend', () => drop.remove());
-    }
-}
-
-function createFloatingText(x, y, txt) {
-    const gameArea = document.getElementById('game-area');
-    if (!gameArea) return;
-
-    const node = document.createElement('div');
-    node.className = 'floating-text';
-    node.textContent = txt;
-    node.style.left = `${x - 10}px`;
-    node.style.top = `${y - 20}px`;
-    gameArea.appendChild(node);
-    node.addEventListener('animationend', () => node.remove());
-}
-
-// Shop Buying Behaviors
-if (buttons.gpc) {
-    buttons.gpc.addEventListener('click', () => {
-        if (state.grapes >= state.costGpc) {
-            state.grapes -= state.costGpc;
-            state.gpc *= 2;
-            state.costGpc = Math.floor(state.costGpc * 2.8);
-            updateUI();
-            saveGame();
-        }
-    });
-}
-
-if (buttons.gps1) {
-    buttons.gps1.addEventListener('click', () => {
-        if (state.grapes >= state.costGps1) {
-            state.grapes -= state.costGps1;
-            state.gps += 1;
-            state.costGps1 = Math.floor(state.costGps1 * 1.5);
-            updateUI();
-            saveGame();
-        }
-    });
-}
-
-if (buttons.gps2) {
-    buttons.gps2.addEventListener('click', () => {
-        if (state.grapes >= state.costGps2) {
-            state.grapes -= state.costGps2;
-            state.gps += 10;
-            state.costGps2 = Math.floor(state.costGps2 * 1.6);
-            updateUI();
-            saveGame();
-        }
-    });
-}
-
-// Idle Game Loop 
-setInterval(() => {
-    if (state.gps > 0) {
-        const yieldPerTick = state.gps / 10;
-        state.grapes += yieldPerTick;
-        state.lifetimeGrapes += yieldPerTick;
-        updateUI();
-    }
-}, 100);
-
-// Auto Save Interval (every 10 seconds)
-setInterval(saveGame, 10000);
-
-// Hard Reset Engine
-const resetBtn = document.getElementById('reset-btn');
-if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-        localStorage.removeItem('grapeState');
-        state = { grapes: 0, gpc: 1, gps: 0, costGpc: 15, costGps1: 50, costGps2: 400, lifetimeGrapes: 0 };
-        updateUI();
-    });
-}
-
-// Bootstrap load UI
-updateUI();
-
+        * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -230,10 +32,10 @@ updateUI();
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-end;
-            padding-bottom: 60px;
+            justify-content: center;
             height: 100%;
             z-index: 1;
+            padding-top: 80px;
         }
 
         /* Right Side: Corporate Shop Panel */
@@ -361,24 +163,25 @@ updateUI();
             background: #ff4757;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
             margin-top: 15px;
             align-self: center;
             margin-bottom: 15px;
+            transition: background 0.2s;
         }
+        
+        #reset-btn:hover { background: #e0414e; }
 
-        /* The Grape Tree Setup */
+        /* Fixed Explicit Size Tree Container Structure */
         #tree-container {
             position: relative;
             width: 320px;
             height: 440px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             z-index: 5;
+            margin-bottom: -20px;
         }
 
         #trunk {
@@ -388,6 +191,8 @@ updateUI();
             border-radius: 6px;
             position: absolute;
             bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1;
         }
 
@@ -398,6 +203,7 @@ updateUI();
             border-radius: 50%;
             position: absolute;
             top: 20px;
+            left: 10px;
             box-shadow: inset -25px -25px 0 rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
             z-index: 2;
             transition: background 0.5s;
@@ -406,9 +212,14 @@ updateUI();
         /* Regrowth Bunch Mechanics */
         .clickable-grape {
             position: absolute;
-            font-size: 48px;
+            font-size: 52px;
             z-index: 6;
             cursor: pointer;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: transform 0.1s, opacity 0.3s ease;
         }
 
@@ -421,7 +232,7 @@ updateUI();
         .clickable-grape:active { transform: scale(0.8); }
 
         #bunch1 { top: 70px; left: 40px; }
-        #bunch2 { top: 40px; left: 135px; }
+        #bunch2 { top: 40px; left: 130px; }
         #bunch3 { top: 80px; right: 40px; }
         #bunch4 { top: 160px; left: 70px; }
         #bunch5 { top: 150px; right: 60px; }
@@ -457,7 +268,7 @@ updateUI();
             height: 60px;
             background: #7bed9f;
             z-index: 0;
-            pointer-events: none; /* Stops it from blocking clicks */
+            pointer-events: none;
         }
 
         @keyframes explode {
@@ -529,7 +340,7 @@ updateUI();
     </div>
 
     <script>
-        // Core State Objects
+        // Core Game State setup
         let state = {
             grapes: 0,
             gpc: 1,
@@ -539,13 +350,4 @@ updateUI();
             costGps2: 400,
             lifetimeGrapes: 0
         };
-
-        // Load Saves safely
-        try {
-            if (localStorage.getItem('grapeState')) {
-                state = JSON.parse(localStorage.getItem('grapeState'));
-            }
-        } catch (e) {
-            console.error("Could not load save state", e);
-        }
 
