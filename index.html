@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grape Clicker Game</title>
+    <title>Grape Empire Tycoon</title>
     <style>
         * {
             box-sizing: border-box;
@@ -18,316 +18,334 @@
             height: 100vh;
             overflow: hidden;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            transition: background 1s ease;
         }
 
-        /* Top Counter Bar */
+        /* Sunset/Golden theme for high levels */
+        body.tier-2 { background: linear-gradient(to bottom, #FF7E5F, #FEB47B); }
+        body.tier-3 { background: linear-gradient(to bottom, #2C3E50, #FD746C); }
+
+        /* Left Side: Game Canvas */
+        #game-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 60px;
+            height: 100%;
+        }
+
+        /* Right Side: Corporate Shop Panel */
+        #shop-panel {
+            width: 380px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid #4b0082;
+        }
+
+        /* Top Counter Header Bar */
         #top-bar {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             background: rgba(75, 0, 130, 0.9);
             color: white;
-            padding: 15px 20px;
+            padding: 15px 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100;
+            z-index: 5;
         }
 
-        .counter-container {
+        .stats-container {
             display: flex;
             flex-direction: column;
-            font-size: 24px;
+        }
+
+        .main-score {
+            font-size: 28px;
             font-weight: bold;
-        }
-
-        .sub-counter {
-            font-size: 14px;
-            color: #d1bcff;
-            font-weight: normal;
-            margin-left: 40px;
-        }
-
-        .grape-icon {
-            font-size: 30px;
-            margin-right: 10px;
-            animation: pulse 2s infinite;
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        #right-actions {
             display: flex;
-            gap: 10px;
+            align-items: center;
+        }
+
+        .sub-rates {
+            font-size: 13px;
+            color: #e8dbff;
+            margin-top: 2px;
+        }
+
+        #tier-badge {
+            background: #ffa500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Shop Elements */
+        .shop-header {
+            background: #4b0082;
+            color: white;
+            padding: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .shop-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .shop-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .shop-item:hover {
+            border-color: #4b0082;
+            transform: translateY(-2px);
+        }
+
+        .item-info h4 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .item-info p {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .buy-btn {
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .buy-btn:hover:not(:disabled) { background: #26af5f; }
+        .buy-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
         #reset-btn {
             background: #ff4757;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            transition: background 0.2s;
+            margin-top: 15px;
+            align-self: center;
+            margin-bottom: 15px;
         }
 
-        #reset-btn:hover {
-            background: #ff6b81;
-        }
-
-        /* Upgrade Shop Bar */
-        #shop-container {
-            position: fixed;
-            top: 75px;
-            z-index: 90;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 20px;
-            border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        #upgrade-btn {
-            background: #ffa500;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        #upgrade-btn:hover:not(:disabled) {
-            background: #ffb833;
-            transform: scale(1.05);
-        }
-
-        #upgrade-btn:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        /* Game Environment */
-        #game-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            height: 100%;
-            margin-top: 120px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            padding-bottom: 50px;
-        }
-
-        /* The Grape Tree/Vine Structure */
+        /* The Grape Tree Setup */
         #tree-container {
             position: relative;
-            width: 300px;
-            height: 450px;
+            width: 320px;
+            height: 480px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            cursor: pointer;
         }
 
         #trunk {
-            width: 30px;
-            height: 180px;
+            width: 36px;
+            height: 200px;
             background: #8B4513;
-            border-radius: 5px;
+            border-radius: 6px;
             position: absolute;
             bottom: 0;
             z-index: 1;
         }
 
         #foliage {
-            width: 280px;
-            height: 280px;
+            width: 300px;
+            height: 300px;
             background: #2ed573;
             border-radius: 50%;
             position: absolute;
             top: 20px;
-            box-shadow: inset -20px -20px 0 rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: inset -25px -25px 0 rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
             z-index: 2;
+            transition: background 0.5s;
         }
 
-        /* Interactive Grape Bunches on the Tree */
+        /* Regrowth Bunch Mechanics */
         .clickable-grape {
             position: absolute;
-            font-size: 45px;
+            font-size: 48px;
             z-index: 3;
-            transition: transform 0.1s ease;
             cursor: pointer;
+            transition: transform 0.1s, opacity 0.3s ease;
         }
 
-        .clickable-grape:active {
-            transform: scale(0.85);
+        .clickable-grape.harvested {
+            opacity: 0.1;
+            pointer-events: none;
+            transform: scale(0.5);
         }
 
-        /* Specific positions for bunches on the tree */
-        #bunch1 { top: 80px; left: 60px; }
-        #bunch2 { top: 60px; left: 130px; }
-        #bunch3 { top: 90px; right: 50px; }
+        .clickable-grape:active { transform: scale(0.8); }
+
+        #bunch1 { top: 70px; left: 60px; }
+        #bunch2 { top: 50px; left: 135px; }
+        #bunch3 { top: 80px; right: 50px; }
         #bunch4 { top: 160px; left: 80px; }
         #bunch5 { top: 150px; right: 70px; }
 
-        /* Falling Grapes Effects */
-        .falling-grape {
+        /* Particle FX & Floating text structures */
+        .juice-drop {
             position: absolute;
-            font-size: 25px;
+            width: 8px;
+            height: 8px;
+            background: #9b59b6;
+            border-radius: 50%;
             pointer-events: none;
             z-index: 4;
-            animation: fall 1s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: explode 0.6s forwards ease-out;
         }
 
         .floating-text {
             position: absolute;
             color: #fff;
             font-weight: bold;
-            font-size: 22px;
+            font-size: 24px;
             text-shadow: 2px 2px 0px #4b0082;
             pointer-events: none;
             z-index: 5;
             animation: floatUp 0.8s forwards;
         }
 
-        /* Ground */
         #ground {
-            position: fixed;
+            position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
             height: 60px;
             background: #7bed9f;
             z-index: 0;
-            box-shadow: inset 0 10px 10px rgba(0,0,0,0.05);
         }
 
-        /* Animations */
-        @keyframes fall {
-            0% {
-                transform: translateY(0) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(420px) translateX(var(--drift, 0px)) rotate(360deg);
-                opacity: 0;
-            }
+        @keyframes explode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--mx), var(--my)) scale(0); opacity: 0; }
         }
 
         @keyframes floatUp {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-70px);
-                opacity: 0;
-            }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-80px); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Bar Counter -->
-    <div id="top-bar">
-        <div class="counter-container">
-            <div><span class="grape-icon">🍇</span>Grapes: <span id="grape-count">0</span></div>
-            <div class="sub-counter">(+<span id="gpc-count">1</span> per click)</div>
+    <!-- Main Game Window -->
+    <div id="game-area">
+        <div id="top-bar">
+            <div class="stats-container">
+                <div class="main-score">🍇 <span id="grape-count">0</span></div>
+                <div class="sub-rates">GPC: +<span id="gpc-display">1</span> | GPS: +<span id="gps-display">0</span></div>
+            </div>
+            <div id="tier-badge">Tier 1: Backyard Vine</div>
         </div>
-        <div id="right-actions">
-            <button id="reset-btn">Reset</button>
-        </div>
-    </div>
 
-    <!-- Upgrade Shop Bar -->
-    <div id="shop-container">
-        <div>🍊 <strong>Golden Fertilizer</strong></div>
-        <button id="upgrade-btn">Buy for <span id="upgrade-cost">15</span> 🍇</button>
-    </div>
-
-    <!-- Main Game Area -->
-    <div id="game-container">
         <div id="tree-container">
             <div id="trunk"></div>
             <div id="foliage"></div>
-           
-            <!-- Interactive Grape Bunches -->
             <div class="clickable-grape" id="bunch1">🍇</div>
             <div class="clickable-grape" id="bunch2">🍇</div>
             <div class="clickable-grape" id="bunch3">🍇</div>
             <div class="clickable-grape" id="bunch4">🍇</div>
             <div class="clickable-grape" id="bunch5">🍇</div>
         </div>
+        <div id="ground"></div>
     </div>
 
-    <div id="ground"></div>
+    <!-- Right Side Dashboard Upgrade Shop -->
+    <div id="shop-panel">
+        <div class="shop-header">Vineyard Shop</div>
+        <div class="shop-list">
+            
+            <!-- Upgrade Item 1 -->
+            <div class="shop-item">
+                <div class="item-info">
+                    <h4>Golden Fertilizer</h4>
+                    <p>Doubles Grapes per Click</p>
+                </div>
+                <button class="buy-btn" id="up-gpc">Cost: 15</button>
+            </div>
+
+            <!-- Upgrade Item 2 -->
+            <div class="shop-item">
+                <div class="item-info">
+                    <h4>Auto Harvester</h4>
+                    <p>Collects +1 grape every second</p>
+                </div>
+                <button class="buy-btn" id="up-gps1">Cost: 50</button>
+            </div>
+
+            <!-- Upgrade Item 3 -->
+            <div class="shop-item">
+                <div class="item-info">
+                    <h4>Vineyard Tractor</h4>
+                    <p>Collects +10 grapes every second</p>
+                </div>
+                <button class="buy-btn" id="up-gps2">Cost: 400</button>
+            </div>
+
+        </div>
+        <button id="reset-btn">Reset Database</button>
+    </div>
 
     <script>
-        // Core Game Variables (Loaded from local storage or defaults)
-        let totalGrapes = localStorage.getItem('grapeCount') ? parseInt(localStorage.getItem('grapeCount')) : 0;
-        let grapesPerClick = localStorage.getItem('grapesPerClick') ? parseInt(localStorage.getItem('grapesPerClick')) : 1;
-        let upgradeCost = localStorage.getItem('upgradeCost') ? parseInt(localStorage.getItem('upgradeCost')) : 15;
-       
-        // DOM Elements
-        const countDisplay = document.getElementById('grape-count');
-        const gpcDisplay = document.getElementById('gpc-count');
-        const upgradeCostDisplay = document.getElementById('upgrade-cost');
-        const upgradeBtn = document.getElementById('upgrade-btn');
-        const clickableGrapes = document.querySelectorAll('.clickable-grape');
-        const gameContainer = document.getElementById('game-container');
-        const resetBtn = document.getElementById('reset-btn');
+        // Core State Objects
+        let state = {
+            grapes: 0,
+            gpc: 1,
+            gps: 0,
+            costGpc: 15,
+            costGps1: 50,
+            costGps2: 400,
+            lifetimeGrapes: 0
+        };
 
-        // Initial UI Synchronization
-        updateUI();
-
-        function updateUI() {
-            countDisplay.textContent = totalGrapes;
-            gpcDisplay.textContent = grapesPerClick;
-            upgradeCostDisplay.textContent = upgradeCost;
-            
-            // Disable purchase button if the player lacks funds
-            if (totalGrapes < upgradeCost) {
-                upgradeBtn.disabled = true;
-            } else {
-                upgradeBtn.disabled = false;
-            }
+        // Load Saves
+        if (localStorage.getItem('grapeState')) {
+            state = JSON.parse(localStorage.getItem('grapeState'));
         }
 
-        // Click Harvesting Behavior
-        clickableGrapes.forEach(grapeBunch => {
-            grapeBunch.addEventListener('click', (e) => {
-                totalGrapes += grapesPerClick;
-                localStorage.setItem('grapeCount', totalGrapes);
-                updateUI();
-
-                // Geometry mapping for popups
-                const rect = e.target.getBoundingClientRect();
-                const containerRect = gameContainer.getBoundingClientRect();
-               
-                const x = rect.left - containerRect.left + (rect.width / 2);
-                const y = rect.top - containerRect.top + (rect.height / 2);
-
-                createFallingGrape(x, y);
-                createFloatingText(x, y, `+${grapesPerClick}`);
-            });
-        });
-
-        // Drop Effect Generator
-        function createFallingGrape(x, y) {
+        const grapeCountEl = document.getElementById('grape-count');
+        const gpcDisplayEl = document.getElementById('gpc-display');
